@@ -2,7 +2,7 @@
 # OMNeT++/OMNEST Makefile for swim
 #
 # This file was generated with the command:
-#  opp_makemake -f --deep -o swim -KQUEUEINGLIB_PROJ=../../queueinglib -I. -Imodel/pladaptMock -I$$\(QUEUEINGLIB_PROJ\) -L../libs -L$$\(QUEUEINGLIB_PROJ\) -L$$\(QUEUEINGLIB_PROJ\) -lqueueinglib -lboost_serialization -lboost_system -lboost_filesystem -lpthread -- -lboost_system
+#  opp_makemake -f --deep -o swim -KQUEUEINGLIB_PROJ=../../queueinglib -I. -Imodel/pladaptMock -I$$\(QUEUEINGLIB_PROJ\) -L../libs -L$$\(QUEUEINGLIB_PROJ\) -L$$\(QUEUEINGLIB_PROJ\) -lqueueinglib -lboost_serialization -lboost_system -lboost_filesystem -lyaml-cpp -lpthread -- -lboost_system
 #
 
 # Name of target to be created (-o option)
@@ -22,7 +22,7 @@ INCLUDE_PATH = -I. -Imodel/pladaptMock -I$(QUEUEINGLIB_PROJ)
 EXTRA_OBJS = -lboost_system
 
 # Additional libraries (-L, -l options)
-LIBS = $(LDFLAG_LIBPATH)../libs $(LDFLAG_LIBPATH)$(QUEUEINGLIB_PROJ) $(LDFLAG_LIBPATH)$(QUEUEINGLIB_PROJ)  -lqueueinglib -lboost_serialization -lboost_system -lboost_filesystem -lpthread
+LIBS = $(LDFLAG_LIBPATH)../libs $(LDFLAG_LIBPATH)$(QUEUEINGLIB_PROJ) $(LDFLAG_LIBPATH)$(QUEUEINGLIB_PROJ)  -lqueueinglib -lboost_serialization -lboost_system -lboost_filesystem -lyaml-cpp -lpthread
 
 # Output directory
 PROJECT_OUTPUT_DIR = ../out
@@ -33,9 +33,46 @@ O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 OBJS = \
     $O/externalControl/AdaptInterface.o \
     $O/managers/adaptation/BaseAdaptationManager.o \
+    $O/managers/adaptation/ProactiveAdaptationManager.o \
     $O/managers/adaptation/ReactiveAdaptationManager.o \
     $O/managers/adaptation/ReactiveAdaptationManager2.o \
     $O/managers/adaptation/UtilityScorer.o \
+    $O/managers/adaptation/dartam/src/DartAdaptationManager.o \
+    $O/managers/adaptation/dartam/src/DartConfiguration.o \
+    $O/managers/adaptation/dartam/src/DartConfigurationManager.o \
+    $O/managers/adaptation/dartam/src/DartDTMCEnvironment.o \
+    $O/managers/adaptation/dartam/src/DartEnvironment.o \
+    $O/managers/adaptation/dartam/src/DartSimpleEnvironment.o \
+    $O/managers/adaptation/dartam/src/DartUtilityFunction.o \
+    $O/managers/adaptation/dartam/src/RandomSeed.o \
+    $O/managers/adaptation/proactive/src/AdaptationManager.o \
+    $O/managers/adaptation/proactive/src/Configuration.o \
+    $O/managers/adaptation/proactive/src/ConfigurationManager.o \
+    $O/managers/adaptation/proactive/src/ConfigurationSpace.o \
+    $O/managers/adaptation/proactive/src/DTMCPartitionedStates.o \
+    $O/managers/adaptation/proactive/src/Environment.o \
+    $O/managers/adaptation/proactive/src/EnvironmentDTMCPartitioned.o \
+    $O/managers/adaptation/proactive/src/GenericConfiguration.o \
+    $O/managers/adaptation/proactive/src/GenericConfigurationManager.o \
+    $O/managers/adaptation/proactive/src/GenericEnvironment.o \
+    $O/managers/adaptation/proactive/src/GenericEnvironmentDTMCPartitioned.o \
+    $O/managers/adaptation/proactive/src/GenericProperties.o \
+    $O/managers/adaptation/proactive/src/GenericUtilityFunction.o \
+    $O/managers/adaptation/proactive/src/JavaSDPAdaptationManager.o \
+    $O/managers/adaptation/proactive/src/JointEnvironment.o \
+    $O/managers/adaptation/proactive/src/PMCAdaptationManager.o \
+    $O/managers/adaptation/proactive/src/PMCRAAdaptationManager.o \
+    $O/managers/adaptation/proactive/src/PRISMWrapper.o \
+    $O/managers/adaptation/proactive/src/ReachabilityRelation.o \
+    $O/managers/adaptation/proactive/src/SDPAdaptationManager.o \
+    $O/managers/adaptation/proactive/src/SDPRAAdaptationManager.o \
+    $O/managers/adaptation/proactive/src/UtilityFunction.o \
+    $O/managers/adaptation/proactive/src/Utils.o \
+    $O/managers/adaptation/proactive/src/WrapperTest.o \
+    $O/managers/adaptation/proactive/src/timeseries/LESTimeSeriesPredictor.o \
+    $O/managers/adaptation/proactive/src/timeseries/OversamplingTimeSeriesPredictor.o \
+    $O/managers/adaptation/proactive/src/timeseries/ScenarioTree.o \
+    $O/managers/adaptation/proactive/src/timeseries/TimeSeriesPredictor.o \
     $O/managers/execution/AddServerTactic.o \
     $O/managers/execution/ExecutionManagerHAProxy.o \
     $O/managers/execution/ExecutionManagerMod.o \

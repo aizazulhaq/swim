@@ -34,6 +34,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/swim/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/swim/src/model/pladaptMock}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../queueinglib&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/swim/src/proactive/include}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.557848848" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -47,7 +48,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/swim/libs}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../queueinglib/&quot;"/>
 								</option>
-								<option id="gnu.cpp.link.option.libs.902626853" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs"/>
+								<option id="gnu.cpp.link.option.libs.902626853" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1645130621" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -207,6 +208,7 @@
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="gcc-debug-pladapt"/>
 		<configuration configurationName="gcc-release">
 			<resource resourceType="PROJECT" workspacePath="/swim"/>
 		</configuration>
