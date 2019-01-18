@@ -129,6 +129,7 @@ Observations SimProbe::getUpdatedObservations() {
         obs.utilization += entry.second.getPercentageAboveZero();
     }
 
+    obs.arrivalRate = getArrivalRate();
     obs.basicResponseTime = getBasicResponseTime();
     obs.basicThroughput = getBasicThroughput();
     obs.optResponseTime = getOptResponseTime();

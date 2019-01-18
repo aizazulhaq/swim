@@ -18,6 +18,8 @@
 
 #include "BaseAdaptationManager.h"
 #include "managers/adaptation/proactive/include/SDPAdaptationManager.h"
+#include "managers/adaptation/dartam/include/dartam/DartConfigurationManager.h"
+#include "managers/adaptation/proactive/include/timeseries/TimeSeriesPredictor.h"
 
 /**
  * Simple reactive adaptation manager
@@ -29,7 +31,11 @@ class ProactiveAdaptationManager : public BaseAdaptationManager
   protected:
     virtual Tactic* evaluate();
 
-    std::unique_ptr<pladapt::SDPAdaptationManager> adaptMgr;
+    std::shared_ptr<pladapt::Environment> getEnv(double val);
+
+    std::shared_ptr<const dart::am2::DartConfigurationManager> configMgr;
+    std::unique_ptr<pladapt::SDPAdaptationManager> adaptnMgr;
+    std::unique_ptr<pladapt::timeseries::TimeSeriesPredictor> predictor;
 };
 
 #endif

@@ -46,7 +46,6 @@ public:
      */
     virtual std::unique_ptr<Configuration> getConfigurationFromYaml(const YAML::Node& configDetails) const = 0;
 
-
 	virtual ~ConfigurationManager();
 };
 

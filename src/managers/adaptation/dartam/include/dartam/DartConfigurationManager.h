@@ -40,16 +40,11 @@ public:
     virtual std::unique_ptr<pladapt::Configuration> getConfigurationFromYaml(const YAML::Node& configDetails) const;
 	unsigned getAddServerLatencyPeriods() const;
 
-	std::shared_ptr<DartConfiguration> getCurrentConfig();
-	void setCurrentConfig(const DartConfiguration& other);
-
-
 protected:
     unsigned servers;
     unsigned dimmers;
     unsigned addServerLatencyPeriods;
     pladapt::ConfigurationSpace configSpace;
-    std::shared_ptr<DartConfiguration> currentConfig;
 };
 
 } /* namespace am2 */

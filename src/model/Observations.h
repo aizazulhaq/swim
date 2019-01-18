@@ -24,6 +24,7 @@ public:
     double optThroughput;
     double avgResponseTime;
     double utilization;
+    double arrivalRate;
 
     Observations();
 };

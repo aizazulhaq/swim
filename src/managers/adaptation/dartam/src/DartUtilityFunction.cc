@@ -21,14 +21,10 @@
 
 #include <managers/adaptation/dartam/include/dartam/DartUtilityFunction.h>
 #include <managers/adaptation/dartam/include/dartam/DartConfiguration.h>
-#include <managers/adaptation/dartam/include/dartam/DartEnvironment.h>
-//#include <managers/adaptation/dartam/include/dartam/Threat.h>
-//#include <managers/adaptation/dartam/include/dartam/TargetSensor.h>
-#include <algorithm>
+#include <managers/adaptation/dartam/include/dartam/DartSimpleEnvironment.h>
+#include <util/MMcQueue.h>
+#include <cmath>
 #include <iostream>
-#include <random>
-#include <memory>
-#include <managers/adaptation/dartam/include/dartam/RandomSeed.h>
 
 using namespace pladapt;
 using namespace std;
@@ -36,77 +32,45 @@ using namespace std;
 namespace dart {
 namespace am2 {
 
-static const double INJECTED_RMSE = 0; //0.3 * 0.6;
-std::unique_ptr<std::normal_distribution<>> pDist;
-std::default_random_engine randomGenerator;
-
-//DartUtilityFunction::DartUtilityFunction(std::shared_ptr<Threat> threat, std::shared_ptr<TargetSensor> targetSensor,
-//		double finalReward)
-//	: threat(threat), targetSensor(targetSensor), finalReward(finalReward)
-//{
-//	if (INJECTED_RMSE > 0) {
-//		randomGenerator.seed(RandomSeed::getNextSeed());
-//		pDist.reset(new normal_distribution<>(0, INJECTED_RMSE));
-//		//pDist.reset(new normal_distribution<>(INJECTED_RMSE / 2, INJECTED_RMSE));
-//	}
-//}
-DartUtilityFunction::DartUtilityFunction() {
-    // TODO: make the utility function
+DartUtilityFunction::DartUtilityFunction(double serviceRate)
+    : serviceRate(serviceRate) {
+    // no-op
 }
-
-
-/**
- * computes g(c_t) in the paper
- */
-double DartUtilityFunction::getAdditiveUtility(
-		const pladapt::Configuration& config, const pladapt::Environment& env,
-		int time) const {
-    auto& dartConfig = dynamic_cast<const DartConfiguration&>(config);
-    auto dartEnv = DartEnvironment(dynamic_cast<const JointEnvironment&>(env));
-
-	double probOfDetection = 0.0d;//targetSensor->getProbabilityOfDetection(dartConfig);
-
-	if (INJECTED_RMSE > 0) {
-    	double error = pDist->operator ()(randomGenerator);
-    	probOfDetection += error;
-    	if (probOfDetection < 0) {
-    		probOfDetection = 0;
-    	} else if (probOfDetection > 1) {
-    		probOfDetection = 1;
-    	}
-    }
-
-	double utility = dartEnv.getProbOfTarget() * probOfDetection;
-
-    return utility;
-}
-
-/**
- * computes s(c_t) in the paper
- */
-double DartUtilityFunction::getMultiplicativeUtility(
-		const pladapt::Configuration& config, const pladapt::Environment& env,
-		int time) const {
-
-	auto& dartConfig = dynamic_cast<const DartConfiguration&>(config);
-    auto dartEnv = DartEnvironment(dynamic_cast<const JointEnvironment&>(env));
-
-	double probOfDestruction = 0.0d;//dartEnv.getProbOfThreat()
-//			* threat->getProbabilityOfDestruction(dartConfig);
-
-    return 1 - probOfDestruction;
-}
-
-
-double DartUtilityFunction::getFinalReward(
-		const pladapt::Configuration& config, const pladapt::Environment& env,
-		int time) const {
-	return finalReward;
-}
-
 
 DartUtilityFunction::~DartUtilityFunction() {
-	// TODO Auto-generated destructor stub
+    // no-op
+}
+
+double DartUtilityFunction::getAdditiveUtility(
+		const pladapt::Configuration& config,
+		const pladapt::Environment& env,
+		int time) const {
+    const DartConfiguration dartConfig  = dynamic_cast<const DartConfiguration&>(config);
+    const DartSimpleEnvironment dartEnv = dynamic_cast<const DartSimpleEnvironment&>(env);
+    // calculate cost:
+    unsigned provisionedServers = dartConfig.getServers() + (dartConfig.getTtcAddServer() > 0 ? 1 : 0);
+    double cost = 1.0 - (provisionedServers / 12.0d);
+    double dimm = dartConfig.getDimmer() / 9.0d;
+
+    double mu   = serviceRate*pow(1.2d, 9.0d - dartConfig.getDimmer());
+    double rate = MMcQueue::totalTime(dartConfig.getServers(), mu, 60000/dartEnv.getProbOfObject(), 60000/dartEnv.getProbOfObject());
+    double resp = 1.0-min(1.0, rate/3000);
+
+    return 0.4d*cost + 0.1d*dimm + 0.5d*resp;
+}
+
+double DartUtilityFunction::getMultiplicativeUtility(
+		const pladapt::Configuration& config,
+		const pladapt::Environment& env,
+		int time) const {
+    return 1.0d;
+}
+
+double DartUtilityFunction::getFinalReward(
+		const pladapt::Configuration& config,
+		const pladapt::Environment& env,
+		int time) const {
+	return 0.0d;
 }
 
 } /* namespace am2 */

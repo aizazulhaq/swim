@@ -35,8 +35,7 @@ public:
 	virtual ~JavaSDPAdaptationManager();
 
     virtual void initialize(std::shared_ptr<const GenericConfigurationManager> configMgr, const std::string& YAMLParams) {
-    	SDPAdaptationManager::initialize(std::static_pointer_cast<const ConfigurationManager, const GenericConfigurationManager>(configMgr),
-    			YAML::Load(YAMLParams));
+    	SDPAdaptationManager::initialize(std::static_pointer_cast<const ConfigurationManager, const GenericConfigurationManager>(configMgr));
     }
 
     /*

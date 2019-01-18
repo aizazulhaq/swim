@@ -41,7 +41,7 @@ const char* SDPRAAdaptationManager::PROBABILITY_BOUND = "probabilityBound";
 
 
 void SDPRAAdaptationManager::initialize(std::shared_ptr<const ConfigurationManager> configMgr, const YAML::Node& params) {
-	SDPAdaptationManager::initialize(configMgr, params);
+	SDPAdaptationManager::initialize(configMgr);
 
 	if (params[PROBABILITY_BOUND].IsDefined()) {
 		survivalRequirement = params[PROBABILITY_BOUND].as<double>();

@@ -52,6 +52,7 @@ std::set<TacticList> ReachabilityRelation::tacticCombinations() const
 }
  
 void ReachabilityRelation::load(std::string path, const ConfigurationManager& configManager) {
+    cout << "loading reachability relation from " << path << endl;
     vector<YAML::Node> nodes = YAML::LoadAllFromFile(path);
     YAML::Node configs = nodes[0]["configs"];
     int idMap[configs.size()];

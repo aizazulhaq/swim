@@ -66,7 +66,6 @@ class SDPAdaptationManager : public AdaptationManager
     std::shared_ptr<ReachabilityMatrix> pReachableFromConfig;
 
     std::shared_ptr<const ConfigurationManager> pConfigMgr;
-    YAML::Node params;
 
     std::shared_ptr<Strategy> lastStrategy; /**< last strategy computed by evaluate() */
 
@@ -83,39 +82,11 @@ class SDPAdaptationManager : public AdaptationManager
     virtual bool isReachableImmediately(unsigned fromConfigIndex, unsigned toConfigIndex) const;
     virtual bool isReachableFromConfig(unsigned fromConfigIndex, unsigned toConfigIndex) const;
 
-    /**
-     * @param immediate if true it is generating the immediate relation
-     *   otherwise it is generating the one step relation
-     */
-    std::string getAlloyOutputPath(bool immediate);
-
-    /**
-     * @param immediate if true it is generating the immediate relation
-     *   otherwise it is generating the one step relation
-     */
-    std::string getAlloyCommand(bool immediate, std::string outputPath);
-
   public:
-    static const char* NO_LATENCY;
-    static const char* REACH_OPTIONS;
-    static const char* REACH_PATH;
-    static const char* REACH_PREFIX;
-    static const char* REACH_MODEL;
-    static const char* REACH_SCOPE;
 
     SDPAdaptationManager();
 
-    /**
-     * parameters must include:
-     *   REACH_MODEL: pathToModelFile not including the ".als" extension
-     *   REACH_PATH: pathToReachProgram
-     *   REACH_SCOPE: string with scope definition
-     *   NO_LATENCY: boolean, true if no tactic has latency. In that case,
-     *   	R^T = R^I. Also, "-nl" will be appended to REACH_MODEL before loading it
-     *   REACH_OPTIONS: options for reach.sh
-     *   REACH_PREFIX: prefix to distinguish yaml files from concurrent processes
-     */
-    virtual void initialize(std::shared_ptr<const ConfigurationManager> configMgr, const YAML::Node& params);
+    virtual void initialize(std::shared_ptr<const ConfigurationManager> configMgr);
     virtual TacticList evaluate(const Configuration& currentConfigObj, const EnvironmentDTMCPartitioned& envDTMC,
     		const UtilityFunction& utilityFunction, unsigned horizon);
     virtual bool supportsStrategy() const;

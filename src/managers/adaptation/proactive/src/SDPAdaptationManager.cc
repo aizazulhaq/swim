@@ -22,7 +22,6 @@
 
 #include <stack>
 #include <map>
-//#include "AllTactics.h"
 #include <iostream>
 
 #include <boost/archive/text_oarchive.hpp>
@@ -35,75 +34,15 @@ using namespace std;
 
 #define EXTRACT_POLICY 1
 #define PRINT_POLICY 0
-#define DUMP_REACHABILITY 0
-#define SERIALIZE_MATRICES 0
 
 namespace pladapt {
-
-const char* SDPAdaptationManager::NO_LATENCY = "nolatency";
-const char* SDPAdaptationManager::REACH_OPTIONS = "reachOptions";
-const char* SDPAdaptationManager::REACH_PATH = "reachPath";
-const char* SDPAdaptationManager::REACH_PREFIX = "reachPrefix";
-const char* SDPAdaptationManager::REACH_MODEL = "reachModel";
-const char* SDPAdaptationManager::REACH_SCOPE = "reachScope";
-
 
 SDPAdaptationManager::SDPAdaptationManager() {
 }
 
-std::string SDPAdaptationManager::getAlloyOutputPath(bool immediate) {
-    stringstream outputPath;
-    outputPath << "reach";
-    if (immediate) {
-        outputPath << "-i";
-    }
-    outputPath << '-' << boost::filesystem::path(params[REACH_MODEL].as<string>()).filename().string();
-    if (params[REACH_PREFIX].IsDefined()) {
-    	outputPath << '-' << params[REACH_PREFIX];
-    }
-    outputPath << '-' << params[REACH_SCOPE];
-    outputPath << ".yaml";
-    return outputPath.str();
-}
-
-std::string SDPAdaptationManager::getAlloyCommand(bool immediate, std::string outputPath) {
-    stringstream command;
-    command << params[REACH_PATH];
-    command << ' ' << params[REACH_OPTIONS];
-    if (immediate) {
-        command << " -i";
-    }
-    command << ' ' << params[REACH_MODEL];
-    if (params[NO_LATENCY].as<bool>()) {
-        command << "-nl";
-    }
-    if (!immediate) {
-        command << "-step";
-    }
-    command << ".als";
-    command << " \"" << outputPath << "\" ";
-    command << params[REACH_SCOPE];
-    return command.str();
-}
-
-
 void SDPAdaptationManager::loadImmediateReachabilityRelation() {
-
     pImmediateReachabilityRelation.reset(new ReachabilityRelation(pConfigMgr->getConfigurationSpace()));
-
-    string outputPath = getAlloyOutputPath(true);
-    string command = getAlloyCommand(true, outputPath);
-
-    cout << "invoking " << command << endl;
-
-    if (system(command.c_str()) != 0) {
-        throw runtime_error(string("Generation of immediate reachability function failed: ") + command.c_str());
-    }
-
-    pImmediateReachabilityRelation->load(outputPath, *pConfigMgr);
-#if DUMP_REACHABILITY
-    pImmediateReachabilityRelation->dump();
-#endif
+    pImmediateReachabilityRelation->load("/headless/yaml/rubis.yaml", *pConfigMgr);
 
     unsigned numberOfStates = pImmediateReachabilityRelation->getNumberOfStates();
     pReachableImmediately.reset(new ReachabilityMatrix(numberOfStates, numberOfStates));
@@ -118,77 +57,37 @@ void SDPAdaptationManager::loadImmediateReachabilityRelation() {
 
 void SDPAdaptationManager::loadReachabilityRelation() {
     pStepReachabilityRelation.reset(new ReachabilityRelation(pConfigMgr->getConfigurationSpace()));
-    if (params[NO_LATENCY].as<bool>()) {
+    pStepReachabilityRelation->load("/headless/yaml/rubis-step.yaml", *pConfigMgr);
 
-        // in the case of zero latency this relation is equal to the immediate relation
-        // that is, R^T = R^I
-       pReachableFromConfig = pReachableImmediately;
-
-       // the underlying StepReachabilityRelation is the identity
-       pStepReachabilityRelation->makeIdentity();
-    } else {
-        string outputPath = getAlloyOutputPath(false);
-        string command = getAlloyCommand(false, outputPath);
-
-        cout << "invoking " << command << endl;
-
-        if (system(command.c_str()) != 0) {
-            throw runtime_error(string("Generation of step reachability function failed: ") + command.c_str());
-        }
-
-        pStepReachabilityRelation->load(outputPath, *pConfigMgr);
-#if DUMP_REACHABILITY
-        pStepReachabilityRelation->dump();
-#endif
-
-        unsigned numberOfStates = pReachableImmediately->size1();
-        pReachableFromConfig.reset(new ReachabilityMatrix(numberOfStates, numberOfStates));
-        for (unsigned i = 0; i < numberOfStates; i++) {
-            const ReachabilityRelation::ReachableList& reachable = pStepReachabilityRelation->getReachableFrom(i);
-            if (!reachable.empty()) {
-                assert(reachable.size() == 1);
-                unsigned configAfterOneStep = reachable.front().configIndex;
-                for (unsigned j = 0; j < numberOfStates; j++) {
-                    if (isReachableImmediately(configAfterOneStep, j)) {
-                        (*pReachableFromConfig)(i,j) = true;
-                    }
+    unsigned numberOfStates = pReachableImmediately->size1();
+    pReachableFromConfig.reset(new ReachabilityMatrix(numberOfStates, numberOfStates));
+    for (unsigned i = 0; i < numberOfStates; i++) {
+        const ReachabilityRelation::ReachableList& reachable = pStepReachabilityRelation->getReachableFrom(i);
+        if (!reachable.empty()) {
+            assert(reachable.size() == 1);
+            unsigned configAfterOneStep = reachable.front().configIndex;
+            for (unsigned j = 0; j < numberOfStates; j++) {
+                if (isReachableImmediately(configAfterOneStep, j)) {
+                    (*pReachableFromConfig)(i,j) = true;
                 }
             }
         }
     }
 }
 
-void SDPAdaptationManager::initialize(std::shared_ptr<const ConfigurationManager> configMgr, const YAML::Node& params)
+void SDPAdaptationManager::initialize(std::shared_ptr<const ConfigurationManager> configMgr)
 {
     pConfigMgr = configMgr;
-    this->params = params;
 
     loadImmediateReachabilityRelation();
     loadReachabilityRelation();
-
-#if SERIALIZE_MATRICES
-    // serialize
-    stringstream outputPath;
-    outputPath << "reach.yaml";
-
-    {
-        std::ofstream ofs(outputPath.str() + ".immediate");
-        boost::archive::text_oarchive oa(ofs);
-        oa << *pReachableImmediately;
-    }
-    {
-        std::ofstream ofs(outputPath.str() + ".fromConfig");
-        boost::archive::text_oarchive oa(ofs);
-        oa << *pReachableFromConfig;
-    }
-#endif
 }
 
 
 TacticList SDPAdaptationManager::evaluate(const Configuration& currentConfigObj, const EnvironmentDTMCPartitioned& envDTMC,
 		const UtilityFunction& utilityFunction, unsigned horizon) {
 
-	if (horizon == 0) {
+    if (horizon == 0) {
 		throw std::invalid_argument("SDPAdaptationManager::evaluate() called with horizon = 0");
 	}
 
@@ -200,11 +99,9 @@ TacticList SDPAdaptationManager::evaluate(const Configuration& currentConfigObj,
 		}
 	}
 
-    const ConfigurationSpace& configSpace = pConfigMgr->getConfigurationSpace();
+	const ConfigurationSpace& configSpace = pConfigMgr->getConfigurationSpace();
     unsigned currentConfig = configSpace.getIndex(currentConfigObj);
-    if (debug) {
-        cout << "current config: " << currentConfigObj << " (" << currentConfig << ')' << endl;
-    }
+    cout << "current config: " << currentConfigObj << " (" << currentConfig << ')' << endl;
 
     typedef std::pair<unsigned, unsigned> SystemEnvPair; // (sysIndex, envIndex)
     typedef map<SystemEnvPair, double> StateUtility;
@@ -239,9 +136,8 @@ TacticList SDPAdaptationManager::evaluate(const Configuration& currentConfigObj,
                     * (utilityFunction.getAdditiveUtility(config, envDTMC.getStateValue(*envState), t)
                            + utilityFunction.getFinalReward(config, envDTMC.getStateValue(*envState), t));
                 if (debug) {
-                    cout << "t=" << t << endl;
-                    cout << "util(" << config << ", " << envDTMC.getStateValue(*envState) << ")="
-                            << (*pUtil)[SystemEnvPair(s, *envState)] << endl;
+                    cout << "t=" << t << ": util at " << config << ", " << envDTMC.getStateValue(*envState) << ": "
+                            << (*pUtil)[SystemEnvPair(s,*envState)] << endl;
                 }
         }
     }

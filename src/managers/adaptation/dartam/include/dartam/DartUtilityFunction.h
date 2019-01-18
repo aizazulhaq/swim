@@ -38,18 +38,14 @@ public:
 	 * @param targetSensor this is used to compute the probability of detecting a target
 	 * @param finalReward value for the final reward (obtained at the end of the horizon)
 	 */
-	//DartUtilityFunction(std::shared_ptr<Threat> threat, std::shared_ptr<TargetSensor> targetSensor,
-	//		double finalReward);
-    DartUtilityFunction();
+	DartUtilityFunction(double responseTime);
 	virtual double getAdditiveUtility(const pladapt::Configuration& config, const pladapt::Environment& env, int time) const;
     virtual double getMultiplicativeUtility(const pladapt::Configuration& config, const pladapt::Environment& env, int time) const;
     virtual double getFinalReward(const pladapt::Configuration& config, const pladapt::Environment& env, int time) const;
     virtual ~DartUtilityFunction();
 
 protected:
-    //std::shared_ptr<Threat> threat;
-    //std::shared_ptr<TargetSensor> targetSensor;
-    double finalReward;
+    double serviceRate;
 };
 
 } /* namespace am2 */

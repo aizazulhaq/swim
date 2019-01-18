@@ -79,7 +79,7 @@ void DartAdaptationManager::instantiateAdaptationMgr(const Params& params) {
 //    amParams[pladapt::SDPRAAdaptationManager::PROBABILITY_BOUND] = params.adaptationManager.probabilityBound;
 
     auto pAdaptMgr = new pladapt::SDPAdaptationManager;
-    pAdaptMgr->initialize(configManager, amParams);
+    pAdaptMgr->initialize(configManager);
     adaptMgr.reset(pAdaptMgr);
 
 	cout << "done" << endl;

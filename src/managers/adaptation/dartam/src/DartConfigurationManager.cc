@@ -42,7 +42,6 @@ DartConfigurationManager::DartConfigurationManager(
             }
         }
     }
-    cout << "[DartConfigurationManager created, config space initialized" << endl;
 }
 
 DartConfigurationManager::~DartConfigurationManager() {
@@ -60,14 +59,6 @@ std::unique_ptr<pladapt::Configuration> DartConfigurationManager::getConfigurati
 
 	return std::unique_ptr<pladapt::Configuration>(
 			new DartConfiguration(s,d,p));
-}
-
-std::shared_ptr<DartConfiguration> DartConfigurationManager::getCurrentConfig() {
-    return currentConfig;
-}
-
-void DartConfigurationManager::setCurrentConfig(const DartConfiguration& other) {
-    currentConfig = std::make_shared<DartConfiguration>(other);
 }
 
 } /* namespace am2 */

@@ -21,9 +21,10 @@
 
 #include <managers/adaptation/dartam/include/dartam/DartDTMCEnvironment.h>
 #include <managers/adaptation/dartam/include/dartam/DartSimpleEnvironment.h>
+#include <managers/adaptation/proactive/include/timeseries/TimeSeriesPredictor.h>
 
 #include <vector>
-#include <boost/math/distributions/beta.hpp>
+#include <boost/math/distributions/poisson.hpp>
 
 using namespace std;
 
@@ -54,9 +55,6 @@ const DistributionApproximationParams ApproxParams[] = {
 
 }
 
-// node index calculation: root node + previous parts + idx
-#define nodeIndex(part, idx) (1 + ApproxParams[approx].points * (part - 1) + idx)
-
 DartDTMCEnvironment::DartDTMCEnvironment(DistributionApproximation approx)
 	: EnvironmentDTMCPartitioned(1 + ApproxParams[approx].points)
 {
@@ -76,6 +74,18 @@ DartDTMCEnvironment::DartDTMCEnvironment(DistributionApproximation approx)
 	 * only the transitions out of it are used, so its value is set to some bogus value.
 	 */
     // TODO: figure out how to predict the environment
+    setStateValue(0, std::make_shared<DartSimpleEnvironment>(0));
+    assignToPart(0,0);
+
+    // get the timeseries predictor
+    boost::math::poisson_distribution<> dist(17);
+
+    TransitionMatrix& tm = getTransitionMatrix();
+    for (int q = 0; q < ApproxParams[approx].points; q++) {
+        setStateValue(q, std::make_shared<DartSimpleEnvironment>(boost::math::quantile(dist, ApproxParams[approx].quantiles[q])));
+        assignToPart(1, q);
+        tm(0, q) = ApproxParams[approx].probabilities[q];
+    }
 }
 
 DartDTMCEnvironment::~DartDTMCEnvironment() {

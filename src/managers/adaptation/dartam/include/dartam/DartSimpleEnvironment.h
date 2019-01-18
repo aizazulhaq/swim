@@ -37,10 +37,6 @@ public:
 		return probOfObject;
 	}
 
-	double asDouble() const override {
-		return probOfObject;
-	}
-
 protected:
 	double probOfObject;
 };
