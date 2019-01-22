@@ -45,7 +45,8 @@ public:
     virtual std::vector<std::string> evaluateWrapper(const Configuration& currentConfigObj, const EnvironmentDTMCPartitioned& envDTMC,
     		const UtilityFunction& utilityFunction, unsigned horizon) {
     	// need to convert result to vector
-    	auto tactics = SDPAdaptationManager::evaluate(currentConfigObj, envDTMC, utilityFunction, horizon);
+        unsigned te = 0;
+    	auto tactics = SDPAdaptationManager::evaluate(currentConfigObj, envDTMC, utilityFunction, horizon,te);
     	std::vector<std::string> result(tactics.begin(), tactics.end());
     	return result;
     }

@@ -29,7 +29,8 @@ void BaseAdaptationManager::initialize(int stage)
 {
     if (stage == 0) {
         pModel = check_and_cast<Model*> (getParentModule()->getSubmodule("model"));
-        decisionTimeSignal = registerSignal("decisionTime");
+        decisionTimeSignal         = registerSignal("decisionTime");
+        transitionsEvaluatedSignal = registerSignal("transitionsEvaluated");
     } else {
 
         // Create the event object we'll use for timing -- just any ordinary message.

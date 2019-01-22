@@ -67,8 +67,8 @@ Tactic* ProactiveAdaptationManager::evaluate() {
     predictor->observe(pModel->getObservations().arrivalRate);
 
     bool isServerBooting = pModel->getServers() > pModel->getActiveServers();
-    unsigned oneStep = pModel->getActiveServerCountIn(pModel->getEvaluationPeriod());
-    unsigned twoStep = pModel->getActiveServerCountIn(pModel->getEvaluationPeriod()*2);
+    unsigned oneStep     = pModel->getActiveServerCountIn(pModel->getEvaluationPeriod());
+    unsigned twoStep     = pModel->getActiveServerCountIn(pModel->getEvaluationPeriod()*2);
     unsigned maxServers  = pModel->getMaxServers();
     unsigned curServers  = pModel->getActiveServers();
 
@@ -81,7 +81,8 @@ Tactic* ProactiveAdaptationManager::evaluate() {
         return this->getEnv(x);
     });
     dart::am2::DartUtilityFunction utilFunction(0.001);
-    auto tactics = adaptnMgr->evaluate(currConfig, dtmc, utilFunction, horizon);
+    unsigned transitionsEvaluated = 0;
+    auto tactics = adaptnMgr->evaluate(currConfig, dtmc, utilFunction, horizon, transitionsEvaluated);
     for (auto& tactic : tactics) {
         if (tactic == "DecDimmer" && dimmer > 0.0) {
             pMacroTactic->addTactic(new SetDimmerTactic(max(0.0, dimmer-dimmerStep)));
@@ -93,6 +94,7 @@ Tactic* ProactiveAdaptationManager::evaluate() {
             pMacroTactic->addTactic(new RemoveServerTactic);
         }
     }
+    emit(transitionsEvaluatedSignal, transitionsEvaluated);
     return pMacroTactic;
 }
 

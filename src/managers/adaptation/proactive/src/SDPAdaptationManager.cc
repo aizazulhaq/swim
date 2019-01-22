@@ -85,7 +85,7 @@ void SDPAdaptationManager::initialize(std::shared_ptr<const ConfigurationManager
 
 
 TacticList SDPAdaptationManager::evaluate(const Configuration& currentConfigObj, const EnvironmentDTMCPartitioned& envDTMC,
-		const UtilityFunction& utilityFunction, unsigned horizon) {
+		const UtilityFunction& utilityFunction, unsigned horizon, unsigned &transitionsEvaluated) {
 
     if (horizon == 0) {
 		throw std::invalid_argument("SDPAdaptationManager::evaluate() called with horizon = 0");
@@ -128,17 +128,16 @@ TacticList SDPAdaptationManager::evaluate(const Configuration& currentConfigObj,
 
         unsigned partIndex = min(t, envDTMC.getNumberOfParts() - 1);
         const DTMCPartitionedStates::Part& envPart = envDTMC.getPart(partIndex);
-        for (DTMCPartitionedStates::Part::const_iterator envState = envPart.begin();
-                envState != envPart.end(); envState++) {
-                assert(pUtil->find(SystemEnvPair(s, *envState)) == pUtil->end());
-                (*pUtil)[SystemEnvPair(s, *envState)] =
+        for (DTMCPartitionedStates::Part::const_iterator envState = envPart.begin(); envState != envPart.end(); envState++) {
+            assert(pUtil->find(SystemEnvPair(s, *envState)) == pUtil->end());
+            (*pUtil)[SystemEnvPair(s, *envState)] =
                     utilityFunction.getMultiplicativeUtility(config, envDTMC.getStateValue(*envState), t)
                     * (utilityFunction.getAdditiveUtility(config, envDTMC.getStateValue(*envState), t)
                            + utilityFunction.getFinalReward(config, envDTMC.getStateValue(*envState), t));
-                if (debug) {
-                    cout << "t=" << t << ": util at " << config << ", " << envDTMC.getStateValue(*envState) << ": "
-                            << (*pUtil)[SystemEnvPair(s,*envState)] << endl;
-                }
+            if (debug) {
+                cout << "t=" << t << ": util at " << config << ", " << envDTMC.getStateValue(*envState) << ": "
+                     << (*pUtil)[SystemEnvPair(s,*envState)] << endl;
+            }
         }
     }
 
@@ -156,7 +155,6 @@ TacticList SDPAdaptationManager::evaluate(const Configuration& currentConfigObj,
         pUtil = new StateUtility;
 
         for (unsigned s = 0; s < configSpace.size(); s++) {
-
             // t = 0 is now before adapting, so only the current config is valid
             if (t == 0 && s != currentConfig) {
                 continue;
@@ -181,8 +179,7 @@ TacticList SDPAdaptationManager::evaluate(const Configuration& currentConfigObj,
 
             unsigned partIndex = min(t, envDTMC.getNumberOfParts() - 1);
             const DTMCPartitionedStates::Part& envPart = envDTMC.getPart(partIndex);
-            for (DTMCPartitionedStates::Part::const_iterator envState = envPart.begin();
-                    envState != envPart.end(); envState++) {
+            for (DTMCPartitionedStates::Part::const_iterator envState = envPart.begin(); envState != envPart.end(); envState++) {
 #if PLADAPT_SDP_NOPARTITION
                 if (t == 0 && *envState != 0) {
                     continue;
@@ -197,30 +194,26 @@ TacticList SDPAdaptationManager::evaluate(const Configuration& currentConfigObj,
                 bool firstReachableState = true;
 
                 for (unsigned nextS = 0; nextS < configSpace.size(); nextS++) {
-                    if ((t == 0 && !isReachableImmediately(s, nextS))
-                            || (t > 0 && !isReachableFromConfig(s, nextS))) {
+                    if ((t == 0 && !isReachableImmediately(s, nextS)) || (t > 0 && !isReachableFromConfig(s, nextS))) {
                         continue;
                     }
                     double util = utilityFunction.getAdaptationReward(config, configSpace.getConfiguration(nextS), t);
 
                     unsigned nextPartIndex = min(t + 1, envDTMC.getNumberOfParts() - 1);
                     const DTMCPartitionedStates::Part& nextEnvPart = envDTMC.getPart(nextPartIndex);
-                    for (DTMCPartitionedStates::Part::const_iterator nextEnvState = nextEnvPart.begin();
-                            nextEnvState != nextEnvPart.end(); nextEnvState++) {
+                    for (DTMCPartitionedStates::Part::const_iterator nextEnvState = nextEnvPart.begin(); nextEnvState != nextEnvPart.end(); nextEnvState++) {
                         SystemEnvPair nextSysEnvPair(nextS, *nextEnvState);
-                        //assert(pNextUtil->find(nextSysEnvPair) != pNextUtil->end());
                         try {
-                            util += envDTMC.getTransitionMatrix()(*envState, *nextEnvState)
-                                    * pNextUtil->at(nextSysEnvPair);
+                            util += envDTMC.getTransitionMatrix()(*envState, *nextEnvState) * pNextUtil->at(nextSysEnvPair);
+                            transitionsEvaluated++;
                         } catch(...) {
                             cout << "didn't find util for (" << configSpace.getConfiguration(nextSysEnvPair.first)
-                                    << ',' << envDTMC.getStateValue(nextSysEnvPair.second) << " at t=" << t + 1 << endl;
+                                 << ',' << envDTMC.getStateValue(nextSysEnvPair.second) << " at t=" << t + 1 << endl;
                             assert(false);
                         }
                     }
 
                     if (firstReachableState || util >= maxUtil) {
-
                         // for equal utility, prefer the current configuration
                         if (firstReachableState || nextS == currentConfig || util > maxUtil) {
                             maxUtil = util;
@@ -233,7 +226,7 @@ TacticList SDPAdaptationManager::evaluate(const Configuration& currentConfigObj,
                 }
 
                 double localUtil = 0;
-                double multiplicativeUtil = 1.0;
+                double multiUtil = 1.0;
                 /*
                  * if t = 0 we're at the current state, so we don't need to
                  * add the local utility.
@@ -242,15 +235,15 @@ TacticList SDPAdaptationManager::evaluate(const Configuration& currentConfigObj,
                  */
                 if (t > 0) {
                     localUtil = utilityFunction.getAdditiveUtility(config, envDTMC.getStateValue(*envState), t);
-                    multiplicativeUtil = utilityFunction.getMultiplicativeUtility(config, envDTMC.getStateValue(*envState), t);
+                    multiUtil = utilityFunction.getMultiplicativeUtility(config, envDTMC.getStateValue(*envState), t);
                 }
 
-                maxUtil = multiplicativeUtil * (localUtil + maxUtil);
+                maxUtil = multiUtil * (localUtil + maxUtil);
 
                 if (debug) {
-                    cout << "\tt=" << t << " util=" << maxUtil << " locUtil=" << localUtil << " multUtil=" << multiplicativeUtil
-                            << " env=" << envDTMC.getStateValue(*envState)
-                            << " -> " << configSpace.getConfiguration(bestNextState) << '(' << bestNextState << ')' << endl;
+                    cout << "\tt="  << t << " util=" << maxUtil << " locUtil=" << localUtil << " multUtil=" << multiUtil
+                         << " env=" << envDTMC.getStateValue(*envState)
+                         << " -> "  << configSpace.getConfiguration(bestNextState) << '(' << bestNextState << ')' << endl;
                 }
 
                 assert(pUtil->find(SystemEnvPair(s, *envState)) == pUtil->end());

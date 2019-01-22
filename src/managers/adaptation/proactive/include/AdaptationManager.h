@@ -49,7 +49,7 @@ class AdaptationManager
 {
   public:
     virtual TacticList evaluate(const Configuration& currentConfigObj, const EnvironmentDTMCPartitioned& envDTMC,
-    		const UtilityFunction& utilityFunction, unsigned horizon) = 0;
+    		const UtilityFunction& utilityFunction, unsigned horizon, unsigned &transitionsEvaluated) = 0;
     void setDebug(bool debug);
 
     /**

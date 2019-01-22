@@ -6,6 +6,6 @@ fi
 
 SRCDIR=`dirname $0`
 
-R -q -e "source('$SRCDIR/plotResults.R'); plotResults('$2', '$1', run=$3, saveAs='$4')"
+R -q -e "source('$SRCDIR/plotResults.R'); plotResults('$2', '$1', run=$3, saveAs='$4', nodimm=TRUE)"
 
 gnome-open $4

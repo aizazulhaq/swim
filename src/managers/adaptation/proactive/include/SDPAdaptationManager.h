@@ -88,7 +88,7 @@ class SDPAdaptationManager : public AdaptationManager
 
     virtual void initialize(std::shared_ptr<const ConfigurationManager> configMgr);
     virtual TacticList evaluate(const Configuration& currentConfigObj, const EnvironmentDTMCPartitioned& envDTMC,
-    		const UtilityFunction& utilityFunction, unsigned horizon);
+    		const UtilityFunction& utilityFunction, unsigned horizon, unsigned &transitionsEvaluated);
     virtual bool supportsStrategy() const;
     virtual std::shared_ptr<Strategy> getStrategy();
     virtual ~SDPAdaptationManager();

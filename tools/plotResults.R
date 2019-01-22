@@ -122,7 +122,7 @@ readVector <- function(dbconn, vectorName, moduleName) {
 
 plotResults <- function(config, folder="SWIM", run, saveAs=NULL, instantaneousUtility=FALSE,
                          periodGrid=FALSE, utilityFc=periodUtilitySEAMS2017A,
-                         brief=FALSE) {
+                         brief=FALSE, nodimm=FALSE) {
   USE_COMPUTED_UTILITY <- TRUE
   require(reshape2)
   require(ggplot2)
@@ -156,6 +156,7 @@ plotResults <- function(config, folder="SWIM", run, saveAs=NULL, instantaneousUt
   activeServers <- readVector(vdb, "activeServers:vector")
   dimmer <- transform(readVector(vdb, "brownoutFactor:vector"), y = 1 - y)
   responses <- readVector(vdb, "lifeTime:vector") # this gets both low and high
+  transitions <- readVector(vdb, "transitionsEvaluated:vector")
   
   lowResponses <- readVector(vdb, "lifeTime:vector", moduleName=paste(network,".sinkLow", sep=""))
   pctLow <- 100 * length(lowResponses$y) / length(responses$y)
@@ -229,6 +230,10 @@ plotResults <- function(config, folder="SWIM", run, saveAs=NULL, instantaneousUt
   tmp$variable='utility'
   md <- rbind(md, tmp)
   
+  tmp <- melt(transitions, id=c("x"))
+  tmp$variable='transitions'
+  md <- rbind(md, tmp)
+  
   names(md)[1] <- 'time'
   
   # this is to have the factors in the order they were added
@@ -241,26 +246,29 @@ plotResults <- function(config, folder="SWIM", run, saveAs=NULL, instantaneousUt
   pltServers <- ggplot(md, aes(x=time,y=value,linetype=variable)) +
     geom_step(data=subset(md, variable %in% c("servers", "activeServers"))) +
     scale_linetype_manual(labels=c('servers','active servers'), values=c("dashed", "solid")) +
-    scale_y_continuous(breaks=seq(0,maxServers)) + 
-    expand_limits(y=0) + 
-    ylab('servers')
+    scale_y_continuous(breaks=seq(0,maxServers,2)) + 
+    expand_limits(y=c(0,6)) + 
+    ylab('services')
   pltDimmer <- ggplot(md, aes(x=time,y=value)) + 
     geom_step(data=subset(md, variable=="dimmer")) + 
     ylab('dimmer') + expand_limits(y=c(0,1))
   pltResponse <- ggplot(md, aes(x=time,y=value)) + 
     geom_line(data=subset(md, variable=="responseTime")) + 
-    ylab('resp. time (s)') + 
+    ylab('resp. time (s)') + expand_limits(y=c(0,12)) +
     geom_hline(yintercept=RT_THRESHOLD_SEC, linetype="dashed", color="darkgrey")
+  pltTransitions <- ggplot(md, aes(x=time,y=cumsum(value)/1000000)) +
+    geom_line(data=subset(md, variable=="transitions")) +
+    ylab('cum. states eval\'d\n(millions)') + expand_limits(y=c(0,10))
   
   if (instantaneousUtility) {
     pltInstUtility <- ggplot(md, aes(x=time,y=value)) + 
       geom_line(data=subset(md, variable=="utility")) + 
-      ylab('utility')
+      ylab('utility') + scale_color_manual(values=c("#0A8A0A"))
   }
   
   pltUtility <- ggplot(md, aes(x=time,y=cumsum(value))) + 
     geom_line(data=subset(md, variable=="utility")) + 
-    ylab('cum. utility')
+    ylab('cum. utility') + expand_limits(y=c(-2500,5000))
   
   # this computes the avg of the amount of RT excess over the threshold over the whole run
   avgError <- sum(pmax(avgresponse$y - RT_THRESHOLD_SEC, 0)) / (length(avgresponse$y) * evaluationPeriod)
@@ -275,14 +283,17 @@ plotResults <- function(config, folder="SWIM", run, saveAs=NULL, instantaneousUt
   theme_set(theme_cowplot(font_size = 8))
 
   if (brief) {
-    plotList <- list(pltRequests, pltServers, pltDimmer, pltResponse)
-    relHeights <- c(1,1,1,1.25)
-  } else if(instantaneousUtility) {
-    plotList <- list(pltRequests, pltServers, pltDimmer, pltResponse, pltInstUtility, pltUtility)
-    relHeights <- c(1,1,1,1,1,1.15)
-  } else {
-    plotList <- list(pltRequests, pltServers, pltDimmer, pltResponse, pltUtility)
+    plotList <- list(pltRequests ,pltTransitions, pltServers, pltDimmer, pltResponse)
     relHeights <- c(1,1,1,1,1.2)
+  } else if(instantaneousUtility) {
+    plotList <- list(pltRequests, pltTransitions, pltServers, pltDimmer, pltResponse, pltInstUtility, pltUtility)
+    relHeights <- c(1,1,1,1,1,1,1.1)
+  } else if(nodimm) {
+    plotList <- list(pltRequests, pltTransitions, pltServers, pltResponse, pltUtility)
+    relHeights <- c(1,1,1,1,1.2)
+  } else {
+    plotList <- list(pltRequests, pltTransitions, pltServers, pltDimmer, pltResponse, pltUtility)
+    relHeights <- c(1,1,1,1,1,1.15)
   }
   
   # apply uniform formatting

@@ -21,9 +21,10 @@ simple ProactiveAdaptationManager like IAdaptationManager
 {
     parameters:
         bool simulateDecisionDelay = default(true);
-        
         @signal[decisionTime](type="double");
         @statistic[decisionTime](unit=msec; record=mean,max,vector);
+        @signal[transitionsEvaluated](type="int");
+        @statistic[transitionsEvaluated](record=mean,max,vector);
 
     @class(ProactiveAdaptationManager);
 }

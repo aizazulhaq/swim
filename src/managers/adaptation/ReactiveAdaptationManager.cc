@@ -61,6 +61,6 @@ Tactic* ReactiveAdaptationManager::evaluate() {
             }
         }
     }
-
+    emit(transitionsEvaluatedSignal, 4);
     return pMacroTactic;
 }

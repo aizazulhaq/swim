@@ -29,6 +29,7 @@ class BaseAdaptationManager : public omnetpp::cSimpleModule
     Model* pModel;
 
 protected:
+    omnetpp::simsignal_t transitionsEvaluatedSignal;
     omnetpp::cMessage *periodEvent; // pointer to the event object which we'll use for timing
     omnetpp::cMessage *decisionCompleteEvent; // event for notifying of decision completion
   Tactic* pTactic;
